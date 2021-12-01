@@ -19,8 +19,10 @@ namespace primitives {
     }
 
     void drawText(WINDOW* win, int x, int y, std::string text, int len) {
+        // print text at xy
         mvwprintw(win, y, x, text.c_str());
         if(len != -1) {
+            // also fill rest with whitespaces so that color is correct
             std::string rest(len - text.size(), ' ');
             wprintw(win, rest.c_str());
         }
