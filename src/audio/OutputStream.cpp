@@ -1,23 +1,44 @@
 #include "OutputStream.hpp"
+#include <iostream>
 
-OutputStream::OutputStream(const sf::SoundBuffer& samples) {
-    loadBuffer(std::move(samples));
-    play();
+OutputStream::OutputStream():
+sampleBuffer(),
+currentSample(0),
+sampleRate(44100),
+channelCount(2)
+{
+    sampleBuffer.push_back(0);
+
 }
 
-OutputStream::OutputStream(const OutputStream& other) {
+// OutputStream::OutputStream(const sf::SoundBuffer& samples) {
+//     loadBuffer(std::move(samples));
+//     play();
+// }
+
+OutputStream::OutputStream(const OutputStream& other):
+sampleBuffer()
+{
     currentSample = other.currentSample;
     sampleRate = other.sampleRate;
+    //sampleBuffer -> reserve(other.sampleBuffer -> size());
+    sampleBuffer.assign(other.sampleBuffer.begin(), other.sampleBuffer.end());
     channelCount = other.channelCount;
-    sampleBuffer = other.sampleBuffer;
 }
 
-OutputStream::~OutputStream() {
-
-}
 
 bool OutputStream::hasEnded() const {
-    return getStatus() == OutputStream::Playing;
+    return getStatus() == OutputStream::Stopped;
+}
+
+void OutputStream::init() {
+    initialize(channelCount, sampleRate);
+}
+
+void OutputStream::setParams(int channelCount, int sampleRate) {
+    channelCount = channelCount;
+    sampleRate = sampleRate;
+    currentSample = 0;
 }
 
 void OutputStream::onSeek(sf::Time timeOffset) {
@@ -45,11 +66,13 @@ bool OutputStream::onGetData(Chunk& data) {
 }
 
 void OutputStream::loadBuffer(const sf::SoundBuffer& samples) {
-    sampleBuffer.assign(samples.getSamples(), samples.getSamples() + samples.getSampleCount());
     currentSample = 0;
     channelCount = samples.getChannelCount();
     sampleRate = samples.getSampleRate();
-    initialize(samples.getChannelCount(), sampleRate);
+    
+    sampleBuffer.assign(samples.getSamples(), samples.getSamples() + samples.getSampleCount());
+
+    initialize(channelCount, sampleRate);
 }
 
 size_t OutputStream::getSampleIndexFromTime(double timeInSeconds) {

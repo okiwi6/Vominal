@@ -13,11 +13,12 @@ SoundManager::~SoundManager() {
 
 void SoundManager::update() {
     // TODO maybe better use Pool of outputstreams to gain performance 
-    std::cout << outputStreams.size() << std::endl;
 
     if(outputStreams.size() > 0) {
-        while(outputStreams.begin() -> hasEnded()) {
+        OutputStream* first = *outputStreams.begin();
+        if(first -> hasEnded()) {
             outputStreams.pop_front();
+            delete first;
         }
     }
 
@@ -34,16 +35,16 @@ void SoundManager::stopRecording() {
 void SoundManager::processSamples(const sf::Int16* samples, std::size_t sampleCount, uint16_t channelCount, uint32_t sampleRate) {
     // at the moment the recorder self inputs into the output device
     // This function is called from recorder thread
+    
     sf::SoundBuffer buffer;
     buffer.loadFromSamples(samples, sampleCount, channelCount, sampleRate);
-    OutputStream out{buffer};
-    out.play();
-    outputStreams.push_back(out);
+    
+    addSound(buffer);
 }
 
-void SoundManager::addSound(sf::SoundBuffer& buffer) {
-    OutputStream out{buffer};
-    out.play();
-    sf::sleep(sf::seconds((3)));
-    outputStreams.push_back(out);
+void SoundManager::addSound(sf::SoundBuffer buffer) {
+    auto ref = new OutputStream;
+    ref -> loadBuffer(buffer);
+    outputStreams.push_back(ref);
+    ref -> play();
 }
